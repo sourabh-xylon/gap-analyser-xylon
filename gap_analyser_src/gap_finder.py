@@ -7,7 +7,7 @@ from prompts.gap_finder import gap_analyser
 router = APIRouter()
 
 
-def find_the_gap_in_invoice(invoice_csv, user_id, email_id, use_case):
+def find_the_gap_in_invoice(invoice_csv, invoice_data_definition, user_id, email_id, use_case):
     try:
         required_fields = []
         import pandas as pd
