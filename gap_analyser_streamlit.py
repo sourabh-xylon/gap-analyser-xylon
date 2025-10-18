@@ -136,19 +136,23 @@ if st.session_state.analysis_result:
 
         missing_fields = result.get("missing_fields", [])
         present_fields_dict = result.get("present_fields", {})
+        uncertain_fields = result.get("uncertain_fields", [])
         total_required = result.get("total_required", 0)
+
         missing_count = len(missing_fields)
         present_count = len(present_fields_dict)
-        gap_percentage = (missing_count / total_required * 100) if total_required > 0 else 0
+        uncertain_count = len(uncertain_fields)
+        gap_percentage = ((missing_count + uncertain_count) / total_required * 100) if total_required > 0 else 0
 
         # Metrics
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
         col1.metric("Missing Fields", missing_count)
-        col2.metric("Present Fields", present_count)
-        col3.metric("Total Required", total_required)
-        col4.metric("Gap %", f"{gap_percentage:.1f}%")
+        col2.metric("Uncertain Fields", uncertain_count)
+        col3.metric("Present Fields", present_count)
+        col4.metric("Total Required", total_required)
+        col5.metric("Gap %", f"{gap_percentage:.1f}%")
         
-        # Side-by-side listing of mapping and missing
+        # Side-by-side listing
         col_left, col_right = st.columns(2)
 
         # Present fields mapping
@@ -174,18 +178,19 @@ if st.session_state.analysis_result:
 
         # Missing fields list
         with col_right:
-            st.subheader("❌ Missing Mandatory Fields")
-            if missing_fields:
-                missing_df = pd.DataFrame(missing_fields, columns=["Missing Required Field"])
+            st.subheader("❌ Missing or Uncertain Fields")
+            combined_missing = missing_fields + uncertain_fields
+            if combined_missing:
+                missing_df = pd.DataFrame(combined_missing, columns=["Field Needing Attention"])
                 missing_df.index = missing_df.index + 1
                 st.dataframe(missing_df, use_container_width=True, hide_index=False, height=400)
                 csv_missing = missing_df.to_csv(index=False)
                 st.download_button(
-                    "Download Missing Fields",
+                    "Download Missing/Uncertain Fields",
                     data=csv_missing,
-                    file_name="missing_fields.csv",
+                    file_name="missing_uncertain_fields.csv",
                     mime="text/csv",
                     key="download_missing"
                 )
             else:
-                st.success("All required fields are present!")
+                st.success("All required fields are present and clear!")
